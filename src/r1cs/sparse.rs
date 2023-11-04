@@ -162,9 +162,10 @@ impl<'a, F: PrimeField> Iterator for Iter<'a, F> {
 
 #[cfg(test)]
 mod tests {
-  use crate::{r1cs::util::FWrap, traits::Group};
+  use crate::r1cs::util::FWrap;
 
   use super::SparseMatrix;
+  use group::Group;
   use pasta_curves::pallas::Point as G;
   use proptest::{
     prelude::*,

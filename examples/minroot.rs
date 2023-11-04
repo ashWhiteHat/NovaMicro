@@ -6,11 +6,9 @@ type G2 = pasta_curves::vesta::Point;
 use bellpepper_core::{num::AllocatedNum, ConstraintSystem, SynthesisError};
 use ff::PrimeField;
 use flate2::{write::ZlibEncoder, Compression};
+use group::Group;
 use nova_snark::{
-  traits::{
-    circuit::{StepCircuit, TrivialCircuit},
-    Group,
-  },
+  traits::circuit::{StepCircuit, TrivialCircuit},
   CompressedSNARK, PublicParams, RecursiveSNARK,
 };
 use num_bigint::BigUint;

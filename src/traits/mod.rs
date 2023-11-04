@@ -1,42 +1,30 @@
 //! This module defines various traits required by the users of the library to implement.
 use crate::errors::NovaError;
 use bellpepper_core::{boolean::AllocatedBit, num::AllocatedNum, ConstraintSystem, SynthesisError};
-use core::{
-  fmt::Debug,
-  ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign},
-};
+use core::fmt::Debug;
 use ff::{PrimeField, PrimeFieldBits};
+use group::Group;
 use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
 
+pub mod circuit;
 pub mod commitment;
+pub mod evaluation;
+pub mod snark;
 
 use commitment::CommitmentEngineTrait;
 
 /// Represents an element of a group
 /// This is currently tailored for an elliptic curve group
-pub trait Group:
-  Clone
-  + Copy
-  + Debug
-  + Eq
-  + GroupOps
-  + GroupOpsOwned
-  + ScalarMul<<Self as Group>::Scalar>
-  + ScalarMulOwned<<Self as Group>::Scalar>
-  + Send
-  + Sync
-  + Serialize
-  + for<'de> Deserialize<'de>
+pub trait GroupExt:
+  Group<Scalar = Self::ScalarExt> + Serialize + for<'de> Deserialize<'de>
 {
   /// A type representing an element of the base field of the group
   type Base: PrimeFieldBits + TranscriptReprTrait<Self> + Serialize + for<'de> Deserialize<'de>;
 
   /// A type representing an element of the scalar field of the group
-  type Scalar: PrimeFieldBits
+  type ScalarExt: PrimeFieldBits
     + PrimeFieldExt
-    + Send
-    + Sync
     + TranscriptReprTrait<Self>
     + Serialize
     + for<'de> Deserialize<'de>;
@@ -78,12 +66,6 @@ pub trait Group:
   /// Returns the affine coordinates (x, y, infinty) for the point
   fn to_coordinates(&self) -> (Self::Base, Self::Base, bool);
 
-  /// Returns an element that is the additive identity of the group
-  fn zero() -> Self;
-
-  /// Returns the generator of the group
-  fn get_generator() -> Self;
-
   /// Returns A, B, and the order of the group as a big integer
   fn get_curve_params() -> (Self::Base, Self::Base, BigInt);
 }
@@ -102,14 +84,14 @@ pub trait CompressedGroup:
   + 'static
 {
   /// A type that holds the decompressed version of the compressed group element
-  type GroupElement: Group;
+  type GroupElement: GroupExt;
 
   /// Decompresses the compressed group element
   fn decompress(&self) -> Option<Self::GroupElement>;
 }
 
 /// A helper trait to absorb different objects in RO
-pub trait AbsorbInROTrait<G: Group> {
+pub trait AbsorbInROTrait<G: GroupExt> {
   /// Absorbs the value in the provided RO
   fn absorb_in_ro(&self, ro: &mut G::RO);
 }
@@ -154,45 +136,20 @@ pub trait ROCircuitTrait<Base: PrimeField> {
 
 /// An alias for constants associated with G::RO
 pub type ROConstants<G> =
-  <<G as Group>::RO as ROTrait<<G as Group>::Base, <G as Group>::Scalar>>::Constants;
+  <<G as GroupExt>::RO as ROTrait<<G as GroupExt>::Base, <G as Group>::Scalar>>::Constants;
 
 /// An alias for constants associated with `G::ROCircuit`
 pub type ROConstantsCircuit<G> =
-  <<G as Group>::ROCircuit as ROCircuitTrait<<G as Group>::Base>>::Constants;
-
-/// A helper trait for types with a group operation.
-pub trait GroupOps<Rhs = Self, Output = Self>:
-  Add<Rhs, Output = Output> + Sub<Rhs, Output = Output> + AddAssign<Rhs> + SubAssign<Rhs>
-{
-}
-
-impl<T, Rhs, Output> GroupOps<Rhs, Output> for T where
-  T: Add<Rhs, Output = Output> + Sub<Rhs, Output = Output> + AddAssign<Rhs> + SubAssign<Rhs>
-{
-}
-
-/// A helper trait for references with a group operation.
-pub trait GroupOpsOwned<Rhs = Self, Output = Self>: for<'r> GroupOps<&'r Rhs, Output> {}
-impl<T, Rhs, Output> GroupOpsOwned<Rhs, Output> for T where T: for<'r> GroupOps<&'r Rhs, Output> {}
-
-/// A helper trait for types implementing group scalar multiplication.
-pub trait ScalarMul<Rhs, Output = Self>: Mul<Rhs, Output = Output> + MulAssign<Rhs> {}
-
-impl<T, Rhs, Output> ScalarMul<Rhs, Output> for T where T: Mul<Rhs, Output = Output> + MulAssign<Rhs>
-{}
-
-/// A helper trait for references implementing group scalar multiplication.
-pub trait ScalarMulOwned<Rhs, Output = Self>: for<'r> ScalarMul<&'r Rhs, Output> {}
-impl<T, Rhs, Output> ScalarMulOwned<Rhs, Output> for T where T: for<'r> ScalarMul<&'r Rhs, Output> {}
+  <<G as GroupExt>::ROCircuit as ROCircuitTrait<<G as GroupExt>::Base>>::Constants;
 
 /// This trait allows types to implement how they want to be added to `TranscriptEngine`
-pub trait TranscriptReprTrait<G: Group>: Send + Sync {
+pub trait TranscriptReprTrait<G: GroupExt>: Send + Sync {
   /// returns a byte representation of self to be added to the transcript
   fn to_transcript_bytes(&self) -> Vec<u8>;
 }
 
 /// This trait defines the behavior of a transcript engine compatible with Spartan
-pub trait TranscriptEngineTrait<G: Group>: Send + Sync {
+pub trait TranscriptEngineTrait<G: GroupExt>: Send + Sync {
   /// initializes the transcript
   fn new(label: &'static [u8]) -> Self;
 
@@ -212,7 +169,7 @@ pub trait PrimeFieldExt: PrimeField {
   fn from_uniform(bytes: &[u8]) -> Self;
 }
 
-impl<G: Group, T: TranscriptReprTrait<G>> TranscriptReprTrait<G> for &[T] {
+impl<G: GroupExt, T: TranscriptReprTrait<G>> TranscriptReprTrait<G> for &[T] {
   fn to_transcript_bytes(&self) -> Vec<u8> {
     self
       .iter()
@@ -220,7 +177,3 @@ impl<G: Group, T: TranscriptReprTrait<G>> TranscriptReprTrait<G> for &[T] {
       .collect::<Vec<u8>>()
   }
 }
-
-pub mod circuit;
-pub mod evaluation;
-pub mod snark;

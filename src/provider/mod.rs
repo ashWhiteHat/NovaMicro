@@ -13,7 +13,7 @@ pub mod poseidon;
 pub mod secp_secq;
 
 use ff::PrimeField;
-use pasta_curves::{self, arithmetic::CurveAffine, group::Group as AnotherGroup};
+use pasta_curves::{self, arithmetic::CurveAffine, group::Group};
 use rayon::{current_num_threads, prelude::*};
 
 /// Native implementation of fast multiexp
@@ -146,9 +146,9 @@ macro_rules! impl_traits {
     $name_curve_affine:ident,
     $order_str:literal
   ) => {
-    impl Group for $name::Point {
+    impl GroupExt for $name::Point {
       type Base = $name::Base;
-      type Scalar = $name::Scalar;
+      type ScalarExt = $name::Scalar;
       type CompressedGroupElement = $name_compressed;
       type PreprocessedGroupElement = $name::Affine;
       type RO = PoseidonRO<Self::Base, Self::Scalar>;
@@ -236,14 +236,6 @@ macro_rules! impl_traits {
 
         (A, B, order)
       }
-
-      fn zero() -> Self {
-        $name::Point::identity()
-      }
-
-      fn get_generator() -> Self {
-        $name::Point::generator()
-      }
     }
 
     impl PrimeFieldExt for $name::Scalar {
@@ -253,7 +245,7 @@ macro_rules! impl_traits {
       }
     }
 
-    impl<G: Group> TranscriptReprTrait<G> for $name_compressed {
+    impl<G: GroupExt> TranscriptReprTrait<G> for $name_compressed {
       fn to_transcript_bytes(&self) -> Vec<u8> {
         self.as_ref().to_vec()
       }

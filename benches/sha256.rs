@@ -14,11 +14,9 @@ use bellpepper_core::{
 use core::time::Duration;
 use criterion::*;
 use ff::{PrimeField, PrimeFieldBits};
+use group::Group;
 use nova_snark::{
-  traits::{
-    circuit::{StepCircuit, TrivialCircuit},
-    Group,
-  },
+  traits::circuit::{StepCircuit, TrivialCircuit},
   PublicParams, RecursiveSNARK,
 };
 use sha2::{Digest, Sha256};

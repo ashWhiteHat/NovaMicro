@@ -2,15 +2,14 @@
 //! We require the commitment engine to provide a commitment to vectors with a single group element
 use crate::{
   errors::NovaError,
-  traits::{AbsorbInROTrait, Group, TranscriptReprTrait},
+  traits::{AbsorbInROTrait, GroupExt, TranscriptReprTrait},
 };
 use core::{
   fmt::Debug,
   ops::{Add, AddAssign},
 };
+use group::ScalarMul;
 use serde::{Deserialize, Serialize};
-
-use super::ScalarMul;
 
 /// Defines basic operations on commitments
 pub trait CommitmentOps<Rhs = Self, Output = Self>:
@@ -34,7 +33,7 @@ impl<T, Rhs, Output> CommitmentOpsOwned<Rhs, Output> for T where
 }
 
 /// This trait defines the behavior of the commitment
-pub trait CommitmentTrait<G: Group>:
+pub trait CommitmentTrait<G: GroupExt>:
   Clone
   + Copy
   + Debug
@@ -73,7 +72,7 @@ pub trait CommitmentTrait<G: Group>:
 }
 
 /// A trait that ties different pieces of the commitment generation together
-pub trait CommitmentEngineTrait<G: Group>: Clone + Send + Sync {
+pub trait CommitmentEngineTrait<G: GroupExt>: Clone + Send + Sync {
   /// Holds the type of the commitment key
   type CommitmentKey: Clone + Debug + Send + Sync + Serialize + for<'de> Deserialize<'de>;
 

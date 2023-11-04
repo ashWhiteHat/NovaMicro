@@ -4,11 +4,9 @@ use bellpepper_core::{num::AllocatedNum, ConstraintSystem, SynthesisError};
 use core::marker::PhantomData;
 use criterion::*;
 use ff::PrimeField;
+use group::Group;
 use nova_snark::{
-  traits::{
-    circuit::{StepCircuit, TrivialCircuit},
-    Group,
-  },
+  traits::circuit::{StepCircuit, TrivialCircuit},
   CompressedSNARK, PublicParams, RecursiveSNARK,
 };
 use std::time::Duration;

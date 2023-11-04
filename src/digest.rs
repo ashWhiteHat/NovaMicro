@@ -81,24 +81,25 @@ impl<'a, F: PrimeField, T: Digestible> DigestComputer<'a, F, T> {
 #[cfg(test)]
 mod tests {
   use ff::Field;
+  use group::Group;
   use once_cell::sync::OnceCell;
   use pasta_curves::pallas;
   use serde::{Deserialize, Serialize};
 
-  use crate::traits::Group;
+  use crate::traits::GroupExt;
 
   use super::{DigestComputer, SimpleDigestible};
 
   #[derive(Serialize, Deserialize)]
-  struct S<G: Group> {
+  struct S<G: GroupExt> {
     i: usize,
     #[serde(skip, default = "OnceCell::new")]
     digest: OnceCell<G::Scalar>,
   }
 
-  impl<G: Group> SimpleDigestible for S<G> {}
+  impl<G: GroupExt> SimpleDigestible for S<G> {}
 
-  impl<G: Group> S<G> {
+  impl<G: GroupExt> S<G> {
     fn new(i: usize) -> Self {
       S {
         i,

@@ -40,6 +40,7 @@ use core::marker::PhantomData;
 use errors::NovaError;
 use ff::Field;
 use gadgets::utils::scalar_as_base;
+use group::Group;
 use nifs::NIFS;
 use r1cs::{R1CSInstance, R1CSShape, R1CSWitness, RelaxedR1CSInstance, RelaxedR1CSWitness};
 use serde::{Deserialize, Serialize};
@@ -47,7 +48,7 @@ use traits::{
   circuit::StepCircuit,
   commitment::{CommitmentEngineTrait, CommitmentTrait},
   snark::RelaxedR1CSSNARKTrait,
-  AbsorbInROTrait, Group, ROConstants, ROConstantsCircuit, ROTrait,
+  AbsorbInROTrait, GroupExt, ROConstants, ROConstantsCircuit, ROTrait,
 };
 
 /// A type that holds public parameters of Nova
@@ -55,8 +56,8 @@ use traits::{
 #[serde(bound = "")]
 pub struct PublicParams<G1, G2, C1, C2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
 {
@@ -79,8 +80,8 @@ where
 
 impl<G1, G2, C1, C2> SimpleDigestible for PublicParams<G1, G2, C1, C2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
 {
@@ -88,8 +89,8 @@ where
 
 impl<G1, G2, C1, C2> PublicParams<G1, G2, C1, C2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
 {
@@ -181,8 +182,8 @@ where
 #[serde(bound = "")]
 pub struct RecursiveSNARK<G1, G2, C1, C2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
 {
@@ -203,8 +204,8 @@ where
 
 impl<G1, G2, C1, C2> RecursiveSNARK<G1, G2, C1, C2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
 {
@@ -469,7 +470,7 @@ where
 
     // check if the output hashes in R1CS instances point to the right running instances
     let (hash_primary, hash_secondary) = {
-      let mut hasher = <G2 as Group>::RO::new(
+      let mut hasher = <G2 as GroupExt>::RO::new(
         pp.ro_consts_secondary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * pp.F_arity_primary,
       );
@@ -483,7 +484,7 @@ where
       }
       self.r_U_secondary.absorb_in_ro(&mut hasher);
 
-      let mut hasher2 = <G1 as Group>::RO::new(
+      let mut hasher2 = <G1 as GroupExt>::RO::new(
         pp.ro_consts_primary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * pp.F_arity_secondary,
       );
@@ -549,8 +550,8 @@ where
 #[serde(bound = "")]
 pub struct ProverKey<G1, G2, C1, C2, S1, S2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
   S1: RelaxedR1CSSNARKTrait<G1>,
@@ -567,8 +568,8 @@ where
 #[serde(bound = "")]
 pub struct VerifierKey<G1, G2, C1, C2, S1, S2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
   S1: RelaxedR1CSSNARKTrait<G1>,
@@ -590,8 +591,8 @@ where
 #[serde(bound = "")]
 pub struct CompressedSNARK<G1, G2, C1, C2, S1, S2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
   S1: RelaxedR1CSSNARKTrait<G1>,
@@ -614,8 +615,8 @@ where
 
 impl<G1, G2, C1, C2, S1, S2> CompressedSNARK<G1, G2, C1, C2, S1, S2>
 where
-  G1: Group<Base = <G2 as Group>::Scalar>,
-  G2: Group<Base = <G1 as Group>::Scalar>,
+  G1: GroupExt<Base = <G2 as Group>::Scalar>,
+  G2: GroupExt<Base = <G1 as Group>::Scalar>,
   C1: StepCircuit<G1::Scalar>,
   C2: StepCircuit<G2::Scalar>,
   S1: RelaxedR1CSSNARKTrait<G1>,
@@ -738,7 +739,7 @@ where
 
     // check if the output hashes in R1CS instances point to the right running instances
     let (hash_primary, hash_secondary) = {
-      let mut hasher = <G2 as Group>::RO::new(
+      let mut hasher = <G2 as GroupExt>::RO::new(
         vk.ro_consts_secondary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * vk.F_arity_primary,
       );
@@ -752,7 +753,7 @@ where
       }
       self.r_U_secondary.absorb_in_ro(&mut hasher);
 
-      let mut hasher2 = <G1 as Group>::RO::new(
+      let mut hasher2 = <G1 as GroupExt>::RO::new(
         vk.ro_consts_primary.clone(),
         NUM_FE_WITHOUT_IO_FOR_CRHF + 2 * vk.F_arity_secondary,
       );
@@ -807,10 +808,10 @@ where
   }
 }
 
-type CommitmentKey<G> = <<G as Group>::CE as CommitmentEngineTrait<G>>::CommitmentKey;
-type Commitment<G> = <<G as Group>::CE as CommitmentEngineTrait<G>>::Commitment;
-type CompressedCommitment<G> = <<<G as Group>::CE as CommitmentEngineTrait<G>>::Commitment as CommitmentTrait<G>>::CompressedCommitment;
-type CE<G> = <G as Group>::CE;
+type CommitmentKey<G> = <<G as GroupExt>::CE as CommitmentEngineTrait<G>>::CommitmentKey;
+type Commitment<G> = <<G as GroupExt>::CE as CommitmentEngineTrait<G>>::Commitment;
+type CompressedCommitment<G> = <<<G as GroupExt>::CE as CommitmentEngineTrait<G>>::Commitment as CommitmentTrait<G>>::CompressedCommitment;
+type CE<G> = <G as GroupExt>::CE;
 
 #[cfg(test)]
 mod tests {
@@ -827,6 +828,7 @@ mod tests {
   use ::bellpepper_core::{num::AllocatedNum, ConstraintSystem, SynthesisError};
   use core::marker::PhantomData;
   use ff::PrimeField;
+  use group::Group;
   use traits::circuit::TrivialCircuit;
 
   #[derive(Clone, Debug, Default)]
@@ -885,8 +887,8 @@ mod tests {
 
   fn test_pp_digest_with<G1, G2, T1, T2>(circuit1: &T1, circuit2: &T2, expected: &str)
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
     T1: StepCircuit<G1::Scalar>,
     T2: StepCircuit<G2::Scalar>,
   {
@@ -957,8 +959,8 @@ mod tests {
 
   fn test_ivc_trivial_with<G1, G2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
   {
     let test_circuit1 = TrivialCircuit::<<G1 as Group>::Scalar>::default();
     let test_circuit2 = TrivialCircuit::<<G2 as Group>::Scalar>::default();
@@ -1009,8 +1011,8 @@ mod tests {
 
   fn test_ivc_nontrivial_with<G1, G2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
   {
     let circuit_primary = TrivialCircuit::default();
     let circuit_secondary = CubicCircuit::default();
@@ -1087,8 +1089,8 @@ mod tests {
 
   fn test_ivc_nontrivial_with_compression_with<G1, G2, E1, E2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
     E1: EvaluationEngineTrait<G1>,
     E2: EvaluationEngineTrait<G2>,
   {
@@ -1176,8 +1178,8 @@ mod tests {
 
   fn test_ivc_nontrivial_with_spark_compression_with<G1, G2, E1, E2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
     E1: EvaluationEngineTrait<G1>,
     E2: EvaluationEngineTrait<G2>,
   {
@@ -1276,8 +1278,8 @@ mod tests {
 
   fn test_ivc_nondet_with_compression_with<G1, G2, E1, E2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
     E1: EvaluationEngineTrait<G1>,
     E2: EvaluationEngineTrait<G2>,
   {
@@ -1416,8 +1418,8 @@ mod tests {
 
   fn test_ivc_base_with<G1, G2>()
   where
-    G1: Group<Base = <G2 as Group>::Scalar>,
-    G2: Group<Base = <G1 as Group>::Scalar>,
+    G1: GroupExt<Base = <G2 as Group>::Scalar>,
+    G2: GroupExt<Base = <G1 as Group>::Scalar>,
   {
     let test_circuit1 = TrivialCircuit::<<G1 as Group>::Scalar>::default();
     let test_circuit2 = CubicCircuit::<<G2 as Group>::Scalar>::default();
